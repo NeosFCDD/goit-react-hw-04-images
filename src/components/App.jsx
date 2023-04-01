@@ -1,4 +1,4 @@
-import { Component } from "react";
+import { useState, useEffect } from "react";
 import Searchbar from "./Searchbar/Searchbar";
 import { ImageGallery } from "./ImageGallery/ImageGallery";
 import { Button } from "./Button/Button";
@@ -9,90 +9,88 @@ import css from "components/styles.module.css";
 const URL = "https://pixabay.com/api/";
 const API_KEY = "33451170-da7868fa9d2d9191c176f5359";
 
-class App extends Component {
-  state = {
-    query: "",
-    results: [],
-    page: 1,
-    status: "idle",
-    modalImage: {
-      url: null,
-      tags: null,
-    },
-  };
+function App ( ) {
 
-  componentDidUpdate = (prevProps, prevState) => {
-    if (prevState.query !== this.state.query || prevState.page !== this.state.page) {
-      fetch(
-        `${URL}?q=${this.state.query}&page=${this.state.page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
-      )
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.hits.length > 0) {
-            this.setState({
-              results: [...this.state.results, ...data.hits.map((hit) => {
-                  return {
-                    id: hit.id,
-                    webformatURL: hit.webformatURL,
-                    tags: hit.tags,
-                    largeImageURL: hit.largeImageURL,
-                  };
-                }),
-              ],
-              status: "idle",
-            });
-          } else {
-            this.setState ({status: "idle"});
-            alert("No more results");
-            return;
-          }
-        })
-        .catch((error) => console.log(error));
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState([]);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("idle");
+  const [url, setUrl] = useState(null);
+  const [tags, setTags] = useState(null);
+
+  useEffect(() => {
+    if (!query) {
+      return;
     }
-  }
 
-  submitHandle = (query) => {
-    if (query.trim() === this.state.query) { return }
-    this.setState({ query, results: [], page:1, status: "pending" });};
+    fetch(
+      `${URL}?q=${query}&page=${page}&key=${API_KEY}&image_type=photo&orientation=horizontal&per_page=12`
+    )
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.hits.length > 0) {
+          setResults ((prevResults) => [...prevResults, ...data.hits.map((hit) => {
+            return {
+              id: hit.id,
+              webformatURL: hit.webformatURL,
+              tags: hit.tags,
+              largeImageURL: hit.largeImageURL,
+            };
+          }),
+        ]);
+          setStatus("idle");
+        } else {
+            setStatus ("idle");
+            alert ("No more results");
+            return;
+        }
+      })
+      .catch ((error) => console.log(error));
+  }, [query, page]);
 
-  onLoadMoreHandle = () => {
-    this.setState({ page: this.state.page + 1, status: "pending" });};
 
-  openModal = ({ bigImg, alt }) => {
-    this.setState({
-      modalImage: {
-        url: bigImg,
-        tags: alt,
-      },
-    });
+  const submitHandle = (submitQuary) => {
+    if (submitQuary.trim() === query) { 
+      return; 
+    }
+    setQuery (submitQuary);
+    setResults ([]);
+    setPage (1);
+    setStatus("pending");
   };
 
-  closeModal = () => {
-    this.setState({
-      modalImage: {
-        url: null,
-        tags: null,
-      },
-    });
+
+  const onLoadMoreHandle = () => {
+    setPage( (page) => page + 1 );
   };
 
-  render() {
-    return (
+
+  const openModal = ({ bigImg, alt }) => {
+    setUrl(bigImg);
+    setTags(alt);
+    };
+
+    
+  const closeModal = () => {
+    setUrl(null);
+    setTags(null);
+  };
+
+  return (
       <div className={css.App}>
-        <Searchbar onSubmit={this.submitHandle} />
-        {this.state.results.length > 0 && (
-          <ImageGallery gallery={this.state.results} onClick={this.openModal} />
+        <Searchbar onSubmit={submitHandle} />
+        {results.length > 0 && (
+          <ImageGallery gallery={results} onClick={openModal} />
         )}
-        {this.state.status === "pending" && <Loader />}
-        {this.state.results.length > 0 && (
-          <Button onLoadMore={this.onLoadMoreHandle} />
+        {status === "pending" && <Loader />}
+        {results.length > 0 && (
+          <Button onLoadMore={onLoadMoreHandle} />
         )}
-        {this.state.modalImage.url && (
-          <Modal src={this.state.modalImage} onClose={this.closeModal} />
+        {url && (
+          <Modal src={{url, tags}} onClose={closeModal} />
         )}
       </div>
-    );
-  }
+  );
 }
 
 export default App;
