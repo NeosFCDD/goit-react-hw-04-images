@@ -1,52 +1,50 @@
-import { Component } from "react";
+import { useState } from "react";
 import css from "components/styles.module.css";
 import PropTypes from "prop-types";
 
 
-export default class Searchbar extends Component {
-        state = {
-                query: "",
+export default function Searchbar({onSubmit}) {
+        
+        const [query, setQuery] = useState("");
+        
+
+        const queryHandle = (e) => {
+                setQuery (e.target.value.toLowerCase());
         };
 
-
-        queryHandle = (e) => {
-                this.setState ({query: e.target.value.toLowerCase()});
-        };
-
-        onFormSubmit = (e) => {
+        const onFormSubmit = (e) => {
                 e.preventDefault();
 
-                if (this.state.query.trim() === "") {
+                if (query.trim() === "") {
                         alert ("Pictures not found or please fill the searchbar");
                         return;
                 }
 
-                this.props.onSubmit (this.state.query);
+                onSubmit (query);
+                
                 window.scrollTo ({
                         top:0,
                         behavior:"smooth",});
         };
 
 
-        render() {
-                return (
-                        <header className={css.Searchbar}>
-                                <form className={css.SearchForm} onSubmit={this.onFormSubmit}>
-                                        <button type="submit" className={css.SearchFormButton}>
+        return (
+                <header className={css.Searchbar}>
+                        <form className={css.SearchForm} onSubmit={onFormSubmit}>
+                                <button type="submit" className={css.SearchFormButton}>
                                                 <span className={css.SearchFormButtonLabel}>Search</span>
-                                        </button>
-                                        <input
+                                </button>
+                                <input
                                                 className={css.SearchFormInput}
                                                 type="text"
-                                                onChange={this.queryHandle}
+                                                onChange={queryHandle}
                                                 autoComplete="off"
                                                 autoFocus
                                                 placeholder="Search images and photos"
-                                        />
-                                </form>
-                        </header>
-                );
-        }
+                                />
+                        </form>
+                </header>
+        );
 };
 
 Searchbar.propTypes = {
